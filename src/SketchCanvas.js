@@ -89,70 +89,7 @@ class SketchCanvas extends React.Component {
     this._size = { width: 0, height: 0 }
     this._initialized = false
 
-    this.state.text = this._processText(props.text ? props.text.map(t => Object.assign({}, t)) : null)
-  }
-
-  getDerivedStateFromProps(nextProps) {
-    this.setState({
-      text: this._processText(nextProps.text ? nextProps.text.map(t => Object.assign({}, t)) : null)
-    })
-  }
-
-  _processText(text) {
-    text && text.forEach(t => t.fontColor = processColor(t.fontColor))
-    return text
-  }
-
-  clear() {
-    this._paths = []
-    this._path = null
-    UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.clear, [])
-  }
-
-  undo() {
-    let lastId = -1;
-    this._paths.forEach(d => lastId = d.drawer === this.props.user ? d.path.id : lastId)
-    if (lastId >= 0) this.deletePath(lastId)
-    return lastId
-  }
-
-  addPath(data) {
-    if (this._initialized) {
-      if (this._paths.filter(p => p.path.id === data.path.id).length === 0) this._paths.push(data)
-      const pathData = data.path.data.map(p => {
-        const coor = p.split(',').map(pp => parseFloat(pp).toFixed(2))
-        return `${coor[0] * this._screenScale * this._size.width / data.size.width},${coor[1] * this._screenScale * this._size.height / data.size.height}`;
-      })
-      UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPath, [
-        data.path.id, processColor(data.path.color), data.path.width * this._screenScale, pathData
-      ])
-    } else {
-      this._pathsToProcess.filter(p => p.path.id === data.path.id).length === 0 && this._pathsToProcess.push(data)
-    }
-  }
-
-  deletePath(id) {
-    this._paths = this._paths.filter(p => p.path.id !== id)
-    UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.deletePath, [id])
-  }
-
-  save(imageType, transparent, folder, filename, includeImage, includeText, cropToImageSize) {
-    UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.save, [imageType, folder, filename, transparent, includeImage, includeText, cropToImageSize])
-  }
-
-  getPaths() {
-    return this._paths
-  }
-
-  getBase64(imageType, transparent, includeImage, includeText, cropToImageSize, callback) {
-    if (Platform.OS === 'ios') {
-      SketchCanvasManager.transferToBase64(this._handle, imageType, transparent, includeImage, includeText, cropToImageSize, callback)
-    } else {
-      NativeModules.SketchCanvasModule.transferToBase64(this._handle, imageType, transparent, includeImage, includeText, cropToImageSize, callback)
-    }
-  }
-
-  componentWillMount() {
+    this.state.text = this._processText(props.text ? props.text.map(t => Object.assign({}, t)) : null);
     this.panResponder = PanResponder.create({
       // Ask to be the responder:
       onStartShouldSetPanResponder: (evt, gestureState) => true,
@@ -215,6 +152,66 @@ class SketchCanvas extends React.Component {
         return true;
       },
     });
+  }
+
+  getDerivedStateFromProps(nextProps) {
+    this.setState({
+      text: this._processText(nextProps.text ? nextProps.text.map(t => Object.assign({}, t)) : null)
+    })
+  }
+
+  _processText(text) {
+    text && text.forEach(t => t.fontColor = processColor(t.fontColor))
+    return text
+  }
+
+  clear() {
+    this._paths = []
+    this._path = null
+    UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.clear, [])
+  }
+
+  undo() {
+    let lastId = -1;
+    this._paths.forEach(d => lastId = d.drawer === this.props.user ? d.path.id : lastId)
+    if (lastId >= 0) this.deletePath(lastId)
+    return lastId
+  }
+
+  addPath(data) {
+    if (this._initialized) {
+      if (this._paths.filter(p => p.path.id === data.path.id).length === 0) this._paths.push(data)
+      const pathData = data.path.data.map(p => {
+        const coor = p.split(',').map(pp => parseFloat(pp).toFixed(2))
+        return `${coor[0] * this._screenScale * this._size.width / data.size.width},${coor[1] * this._screenScale * this._size.height / data.size.height}`;
+      })
+      UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.addPath, [
+        data.path.id, processColor(data.path.color), data.path.width * this._screenScale, pathData
+      ])
+    } else {
+      this._pathsToProcess.filter(p => p.path.id === data.path.id).length === 0 && this._pathsToProcess.push(data)
+    }
+  }
+
+  deletePath(id) {
+    this._paths = this._paths.filter(p => p.path.id !== id)
+    UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.deletePath, [id])
+  }
+
+  save(imageType, transparent, folder, filename, includeImage, includeText, cropToImageSize) {
+    UIManager.dispatchViewManagerCommand(this._handle, UIManager.RNSketchCanvas.Commands.save, [imageType, folder, filename, transparent, includeImage, includeText, cropToImageSize])
+  }
+
+  getPaths() {
+    return this._paths
+  }
+
+  getBase64(imageType, transparent, includeImage, includeText, cropToImageSize, callback) {
+    if (Platform.OS === 'ios') {
+      SketchCanvasManager.transferToBase64(this._handle, imageType, transparent, includeImage, includeText, cropToImageSize, callback)
+    } else {
+      NativeModules.SketchCanvasModule.transferToBase64(this._handle, imageType, transparent, includeImage, includeText, cropToImageSize, callback)
+    }
   }
 
   async componentDidMount() {
